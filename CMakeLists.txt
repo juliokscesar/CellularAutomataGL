@@ -16,7 +16,8 @@ set(SRC_DIR src)
 set(SRC_FILES 
     ext/glad/src/glad.c
     ext/griffinLogCpp/src/griffinLog/griffinLog.cpp
-    src/main.cpp
+
+    ${SRC_DIR}/main.cpp
 )
 
 add_executable(autom ${SRC_FILES})
@@ -25,6 +26,11 @@ if (WIN32)
     set(GLFW_DIR ${PROJECT_SOURCE_DIR}/ext/glfw-win64)
     if (MSVC)
         set(GLFW_LIB_DIR ${GLFW_DIR}/lib-vc2022)
+
+        target_sources(autom PUBLIC 
+            ${SRC_DIR}/core/errors.h
+            ${SRC_DIR}/core/logging.h
+        )
     else()
         set(GLFW_LIB_DIR ${GLFW_DIR}/lib-mingw-w64)
     endif()

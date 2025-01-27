@@ -5,9 +5,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <griffinLog/griffinLog.hpp>
-
-#include "errors.h"
+#include "core/logging.h"
+#include "core/errors.h"
 
 struct WindowSpecs {
     uint32_t width;
@@ -21,36 +20,38 @@ void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 
 void initGLFW();
 GLFWwindow* initWindow(const WindowSpecs& winSpecs);
-void setGLFWContext(GLFWwindow* window, const WindowSpecs& winSpecs);
+void setGLFWContext(GLFWwindow* window);
 bool initGLAD();
 
+void setupViewport(GLFWwindow* window, const WindowSpecs& winSpecs);
 void renderLoop(GLFWwindow* window, WindowSpecs& winSpecs);
 
 int main() {
     initGLFW();
+    logd("GLFW initialized");
     
     WindowSpecs winSpecs{800, 600, "Hello World"};
     GLFWwindow* window = initWindow(winSpecs);
+    logd("Window created");
     if (!window) {
-        grflog::fatal("Null window pointer");
+        logf("Null window pointer");
         return _ERR_NULL_WINDOW;
     }        
-    setGLFWContext(window, winSpecs);
-    grflog::info("Created window and set context");
-    glCheckError();
+    setGLFWContext(window);
+    logd("Context set");
 
     if (!initGLAD()) {
-        grflog::fatal("Failed to initialize GLAD");
+        logf("Failed to initialize GLAD");
         return _ERR_GLAD_INIT;
     }
-    grflog::info("Initialized GLAD");
+    logd("Initialized GLAD");
 
-    while (!glfwWindowShouldClose(window)) {
-        grflog::info("New frame");
+    setupViewport(window, winSpecs);
+    while (!glfwWindowShouldClose(window)) 
         renderLoop(window, winSpecs);
-    }
+    
     glCheckError();
-    grflog::info("Ending program normally");
+    logi("Ending program normally");
 
     glfwTerminate();
     return 0;
@@ -65,6 +66,8 @@ void initGLFW() {
 
     // Set core-profile
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
 }
 
 GLFWwindow* initWindow(const WindowSpecs& winSpecs) {
@@ -78,19 +81,23 @@ GLFWwindow* initWindow(const WindowSpecs& winSpecs) {
     return window;
 }
 
-void setGLFWContext(GLFWwindow* window, const WindowSpecs& winSpecs) {
+void setGLFWContext(GLFWwindow* window) {
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
+}
+
+bool initGLAD() {
+    return (bool)gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+}
+
+void setupViewport(GLFWwindow* window, const WindowSpecs& winSpecs) {
     glViewport(0, 0, winSpecs.width, winSpecs.height);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
-bool initGLAD() {
-    return gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-}
-
 void renderLoop(GLFWwindow* window, WindowSpecs& winSpecs) {
-    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    // glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     glfwPollEvents();
     glfwSwapBuffers(window);
